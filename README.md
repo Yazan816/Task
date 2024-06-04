@@ -1,0 +1,114 @@
+
+
+  تطبيق خوارزمية Gabow لتحديد مكونات الاتصال القوي ثنائي الاتجاه.
+
+  :param graph:  بيان الدخل ممثلا بـ defaultdict[int, list[int]] 
+  :return:  قائمة  مكونات الاتصال القوي ثنائي الاتجاه 
+  """
+  n = len(graph)
+  low = [0] * n
+  dfn = [0] * n
+  parent = [None] * n
+  stack = []
+  bcc = []
+  timer = 0
+  
+  def dfs(u):
+    nonlocal timer
+    low[u] = dfn[u] = timer
+    timer += 1
+    stack.append(u)
+    for v in graph[u]:
+      if dfn[v] == 0:
+        parent[v] = u
+        dfs(v)
+        low[u] = min(low[u], low[v])
+      elif v != parent[u] and low[u] > dfn[v]:
+        low[u] = min(low[u], dfn[v])
+    if low[u] == dfn[u]:
+      component = []
+      while True:
+        v = stack.pop()
+        component.append(v)
+        if v == u:
+          break
+      bcc.append(component)
+      
+  for i in range(n):
+    if dfn[i] == 0:
+      dfs(i)
+  return bcc
+
+
+def jens_schmidt_articulation_points(graph):
+  """
+  تطبيق خوارزمية Jens Schmidt للكشف عن نقاط التفصل.
+
+  :param graph:  بيان الدخل ممثلا بـ defaultdict[int, list[int]] 
+  :return:  قائمة من نقاط التفصل  
+  """
+  n = len(graph)
+  low = [0] * n
+  dfn = [0] * n
+  parent = [None] * n
+  stack = []
+  articulation_points = set()
+  timer = 0
+  
+  def dfs(u):
+    nonlocal timer
+    low[u] = dfn[u] = timer
+    timer += 1
+    stack.append(u)
+    children = 0
+    for v in graph[u]:
+      if dfn[v] == 0:
+        children += 1
+        parent[v] = u
+        dfs(v)
+        low[u] = min(low[u], low[v])
+        if parent[u] is None and children >= 2:  #  نقطة  التفصل  في  الجدور 
+          articulation_points.add(u)
+        elif parent[u] is not None and low[v] >= dfn[u]: # نقطة  التفصل 
+          articulation_points.add(u)
+      elif v != parent[u] and low[u] > dfn[v]:
+        low[u] = min(low[u], dfn[v])
+    
+  for i in range(n):
+    if dfn[i] == 0:
+      dfs(i)
+  return list(articulation_points)
+
+
+def check_2_vertex_strongly_biconnected(graph):
+  """
+  الوظيفة  للتحقق  من  خاصية  2-vertex strongly biconnected.
+
+  :param graph: بيان الدخل ممثلا بـ defaultdict[int, list[int]]
+  :return:  True إذا كان البيان  2-vertex strongly biconnected  و False خلاف ذلك
+  """
+  # 1.   الخطوة الأولى: التحقق من الاتصال بقوة
+  bcc_components = gabow_biconnected_components(graph)
+  if len(bcc_components) > 1:
+    return False #  لا يوجد اتصالا بقوة ثنائي الاتجاه
+  
+  # 2.   الخطوة الثانية: تحويل البيان إلى بيان غير موجه
+  undirected_graph = defaultdict(list)
+  for u, neighbors in graph.items():
+    for v in neighbors:
+      undirected_graph[u].append(v)
+      undirected_graph[v].append(u)
+  
+  # 3.   الخطوة الثالثة: التحقق من وجود نقاط  التفصل
+  articulation_points = jens_schmidt_articulation_points(undirected_graph)
+  if len(articulation_points) > 0:
+    return False #   يوجد  نقطة  التفصل 
+
+  return True #   البيان  2-vertex strongly biconnected
+
+عبدالله بسام هيفا 5511
+يزن عيسى أحمد 5173
+حبيب حسن شيخ سليمان5167
+حيدر نيروز شحيته5535
+رشيد أحمد عبدالله5243
+حيدرآسر صقور6061
